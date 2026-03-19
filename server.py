@@ -125,7 +125,9 @@ def scan():
     try:
         import anthropic
         img = base64.standard_b64encode(file.read()).decode()
-        mt  = file.content_type or "image/jpeg"
+        mt = file.content_type or "image/jpeg"
+	if mt == "image/heic" or mt == "image/heif":
+    		mt = "image/jpeg"
         cl  = anthropic.Anthropic(api_key=key)
         msg = cl.messages.create(model="claude-opus-4-5", max_tokens=512,
             messages=[{"role":"user","content":[
