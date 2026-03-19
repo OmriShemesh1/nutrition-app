@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>מעקב תזונה</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f18;--s1:#161925;--s2:#1e2235;--s3:#252a40;
+  --br:#2a3050;--br2:#353c5a;
+  --acc:#5b8def;--acc2:#7c6af5;
+  --grn:#2dd4a0;--red:#f06a6a;--ylw:#f5c842;--org:#f5894a;
+  --txt:#dde2f0;--txt2:#7a85a8;--txt3:#4a526e;
+  --r:10px;
+}
+html,body{height:100%;font-family:'Heebo',sans-serif;background:var(--bg);color:var(--txt);font-size:14px;overflow:hidden}
+
+/* ── Layout ── */
+.shell{display:flex;height:100vh;flex-direction:column}
+.topbar{
+  height:52px;background:var(--s1);border-bottom:1px solid var(--br);
+  display:flex;align-items:center;padding:0 18px;gap:12px;flex-shrink:0;
+  box-shadow:0 2px 12px rgba(0,0,0,.3)
+}
+.topbar-title{font-size:17px;font-weight:800;color:var(--acc);flex:1;letter-spacing:-.3px}
+.body{display:flex;flex:1;overflow:hidden}
+.sidebar{
+  width:110px;background:var(--s1);border-left:1px solid var(--br);
+  display:flex;flex-direction:column;padding:8px 6px;gap:3px;flex-shrink:0
+}
+.nav-btn{
+  padding:10px 6px;border-radius:8px;border:none;background:none;
+  color:var(--txt2);font-family:'Heebo',sans-serif;font-size:11px;font-weight:600;
+  cursor:pointer;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:4px
+}
+.nav-btn .ico{font-size:20px}
+.nav-btn:hover{background:var(--s2);color:var(--txt)}
+.nav-btn.active{background:var(--s2);color:var(--acc)}
+.content{flex:1;overflow-y:auto;padding:18px}
+.page{display:none}.page.on{display:block}
+
+/* ── Cards ── */
+.card{background:var(--s1);border:1px solid var(--br);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.sec-title{font-size:16px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+
+/* ── Macro grid ── */
+.macro-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.mbox{background:var(--s2);border-radius:var(--r);padding:14px 10px;text-align:center;border:1px solid var(--br)}
+.mbox .val{font-size:24px;font-weight:900;line-height:1}
+.mbox .lbl{font-size:10px;color:var(--txt2);margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.mbox .tgt{font-size:10px;color:var(--txt3);margin-top:2px}
+.mbox .bar{height:4px;background:var(--br);border-radius:2px;margin-top:7px;overflow:hidden}
+.mbox .fill{height:100%;border-radius:2px;transition:width .5s}
+.mbox.c .val{color:var(--ylw)}.mbox.c .fill{background:var(--ylw)}
+.mbox.p .val{color:var(--acc)}.mbox.p .fill{background:var(--acc)}
+.mbox.f .val{color:var(--org)}.mbox.f .fill{background:var(--org)}
+.mbox.k .val{color:var(--grn)}.mbox.k .fill{background:var(--grn)}
+.over .val{color:var(--red)!important}.over .fill{background:var(--red)!important}
+
+/* ── Date nav ── */
+.date-row{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.date-row input[type=date]{
+  background:var(--s2);border:1px solid var(--br);border-radius:8px;
+  padding:7px 12px;color:var(--txt);font-family:'Heebo',sans-serif;font-size:13px;
+  font-weight:700;flex:1;text-align:center
+}
+.date-row input:focus{outline:none;border-color:var(--acc)}
+
+/* ── Meal sections ── */
+.meal-sec{margin-bottom:8px;border-radius:var(--r);overflow:hidden;border:1px solid var(--br)}
+.meal-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;background:var(--s2);cursor:pointer;user-select:none
+}
+.meal-hdr .mname{font-weight:700;font-size:13px}
+.meal-hdr .mcals{font-size:11px;color:var(--txt2)}
+.meal-body{background:var(--s1)}
+.log-row{
+  display:flex;align-items:center;gap:10px;padding:9px 14px;
+  border-bottom:1px solid var(--br);
+}
+.log-row:last-child{border-bottom:none}
+.log-info{flex:1}
+.log-name{font-weight:600;font-size:13px}
+.log-macros{font-size:11px;color:var(--txt2);margin-top:2px}
+.log-empty{padding:10px 14px;font-size:12px;color:var(--txt3)}
+
+/* ── Buttons ── */
+.btn{
+  padding:9px 16px;border-radius:8px;border:none;
+  font-family:'Heebo',sans-serif;font-size:13px;font-weight:700;
+  cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px
+}
+.btn-pri{background:var(--acc);color:#fff}.btn-pri:hover{background:#4a7de0}
+.btn-sec{background:var(--s3);color:var(--txt);border:1px solid var(--br)}.btn-sec:hover{background:var(--br)}
+.btn-grn{background:var(--grn);color:#0d0f18}.btn-grn:hover{filter:brightness(1.1)}
+.btn-red{background:transparent;color:var(--red);border:none;padding:5px 8px;font-size:13px}.btn-red:hover{background:rgba(240,106,106,.12)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-full{width:100%;justify-content:center}
+
+/* ── Forms ── */
+.fg{margin-bottom:11px}
+.fg label{display:block;font-size:11px;font-weight:700;color:var(--txt2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+input,select,textarea{
+  width:100%;background:var(--s2);border:1px solid var(--br);border-radius:8px;
+  padding:9px 12px;color:var(--txt);font-family:'Heebo',sans-serif;font-size:13px;
+  transition:border-color .15s
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--acc)}
+select option{background:var(--s2)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.row4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+
+/* ── Modal ── */
+.overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);
+  z-index:200;align-items:center;justify-content:center
+}
+.overlay.open{display:flex}
+.modal{
+  background:var(--s1);border:1px solid var(--br2);border-radius:14px;
+  padding:24px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;
+  animation:popIn .2s ease
+}
+@keyframes popIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal-title{font-size:16px;font-weight:800;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}
+.close-btn{background:none;border:none;color:var(--txt2);font-size:22px;cursor:pointer;line-height:1}
+.close-btn:hover{color:var(--txt)}
+
+/* ── Search ── */
+.search-wrap{position:relative;margin-bottom:10px}
+.search-wrap input{padding-right:34px}
+.search-icon{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--txt3);pointer-events:none}
+
+/* ── Product list (pick) ── */
+.pick-list{
+  max-height:180px;overflow-y:auto;border:1px solid var(--br);
+  border-radius:8px;margin-bottom:10px;background:var(--s2)
+}
+.pick-item{
+  padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--br);
+  transition:background .12s
+}
+.pick-item:last-child{border-bottom:none}
+.pick-item:hover,.pick-item.sel{background:var(--acc2)}
+.pick-item.sel .pi-name,.pick-item.sel .pi-macros{color:#fff}
+.pi-name{font-weight:600;font-size:12px}
+.pi-macros{font-size:10px;color:var(--txt2);margin-top:1px}
+
+/* ── Source tabs ── */
+.src-tabs{display:flex;gap:4px;margin-bottom:14px}
+.src-tab{
+  flex:1;padding:8px;border-radius:7px;border:1px solid var(--br);
+  background:none;color:var(--txt2);font-family:'Heebo',sans-serif;
+  font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;text-align:center
+}
+.src-tab.active{background:var(--acc);border-color:var(--acc);color:#fff}
+
+/* ── Products table ── */
+.prod-table{width:100%;border-collapse:collapse;font-size:12px}
+.prod-table th{
+  background:var(--s2);padding:8px 10px;text-align:right;
+  font-weight:700;color:var(--txt2);font-size:11px;white-space:nowrap
+}
+.prod-table td{padding:8px 10px;border-bottom:1px solid var(--br);vertical-align:middle}
+.prod-table tr:last-child td{border-bottom:none}
+.prod-table tr:hover td{background:var(--s2)}
+.cat-tag{
+  display:inline-block;padding:2px 7px;border-radius:20px;
+  font-size:10px;font-weight:700;background:rgba(91,141,239,.18);color:var(--acc)
+}
+
+/* ── Cat filter ── */
+.cat-filter{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.cat-chip{
+  padding:5px 11px;border-radius:20px;border:1px solid var(--br);
+  background:none;color:var(--txt2);font-family:'Heebo',sans-serif;
+  font-size:11px;font-weight:600;cursor:pointer;transition:all .15s
+}
+.cat-chip.active{background:var(--acc);border-color:var(--acc);color:#fff}
+
+/* ── Scan area ── */
+.scan-drop{
+  border:2px dashed var(--br2);border-radius:var(--r);padding:36px;
+  text-align:center;cursor:pointer;transition:all .2s;margin-bottom:14px
+}
+.scan-drop:hover{border-color:var(--acc);background:rgba(91,141,239,.05)}
+.scan-icon{font-size:44px;margin-bottom:8px}
+
+/* ── Recipe card ── */
+.rec-card{background:var(--s2);border-radius:var(--r);border:1px solid var(--br);margin-bottom:10px;overflow:hidden}
+.rec-hdr{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:var(--s3)}
+.rec-body{padding:12px 14px}
+.rec-macros{font-size:12px;color:var(--acc);font-weight:600;margin-bottom:5px}
+.rec-ings{font-size:11px;color:var(--txt2)}
+
+/* ── Weight chart ── */
+.chart-wrap{position:relative;height:190px;margin-bottom:4px}
+canvas{border-radius:8px}
+
+/* ── Weight table ── */
+.w-table{width:100%;border-collapse:collapse;font-size:13px}
+.w-table th{background:var(--s2);padding:8px 12px;text-align:center;font-weight:700;color:var(--txt2);font-size:11px}
+.w-table td{padding:9px 12px;border-bottom:1px solid var(--br);text-align:center}
+.w-table tr:last-child td{border-bottom:none}
+.chg-dn{color:var(--grn);font-weight:700}
+.chg-up{color:var(--red);font-weight:700}
+
+/* ── Toast ── */
+.toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:var(--s3);border:1px solid var(--br2);color:var(--txt);
+  padding:10px 22px;border-radius:24px;font-size:13px;font-weight:600;
+  z-index:500;pointer-events:none;
+  animation:toastAnim 2.6s ease forwards
+}
+@keyframes toastAnim{
+  0%{opacity:0;transform:translateX(-50%) translateY(8px)}
+  12%{opacity:1;transform:translateX(-50%) translateY(0)}
+  78%{opacity:1}100%{opacity:0}
+}
+
+/* Spinner */
+.spin{width:28px;height:28px;border:3px solid var(--br2);border-top-color:var(--acc);border-radius:50%;animation:rot .6s linear infinite;margin:0 auto}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* Divider */
+.divider{height:1px;background:var(--br);margin:14px 0}
+
+@media(max-width:700px){
+  .macro-row{grid-template-columns:1fr 1fr}
+  .sidebar{width:72px}
+  .nav-btn{font-size:9px;padding:8px 4px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ── Top bar ── -->
+<div class="topbar">
+  <div class="topbar-title">🥗 מעקב תזונה</div>
+  <button class="btn btn-sec btn-sm" onclick="openModal('settingsModal')">⚙️ יעדים</button>
+</div>
+
+<div class="body">
+
+<!-- ── Sidebar ── -->
+<nav class="sidebar">
+  <button class="nav-btn active" id="nb-daily"    onclick="tab('daily',this)">   <span class="ico">📅</span>יומן</button>
+  <button class="nav-btn"        id="nb-products" onclick="tab('products',this)"><span class="ico">📦</span>מאגר</button>
+  <button class="nav-btn"        id="nb-scan"     onclick="tab('scan',this)">    <span class="ico">📷</span>סריקה</button>
+  <button class="nav-btn"        id="nb-recipes"  onclick="tab('recipes',this)"> <span class="ico">🍳</span>מתכונים</button>
+  <button class="nav-btn"        id="nb-weight"   onclick="tab('weight',this)">  <span class="ico">⚖️</span>משקל</button>
+</nav>
+
+<div class="content">
+
+<!-- ════════════════ DAILY ════════════════ -->
+<div class="page on" id="pg-daily">
+  <div class="date-row">
+    <button class="btn btn-sec btn-sm" onclick="shiftDay(-1)">◀</button>
+    <input type="date" id="dateInput" onchange="loadDay()">
+    <button class="btn btn-sec btn-sm" onclick="shiftDay(1)">▶</button>
+    <button class="btn btn-sec btn-sm" onclick="goToday()">היום</button>
+  </div>
+
+  <div class="macro-row" id="macroRow">
+    <div class="mbox c"><div class="val" id="mv-cal">0</div><div class="lbl">קלוריות</div><div class="tgt" id="mt-cal">—</div><div class="bar"><div class="fill" id="mb-cal" style="width:0%"></div></div></div>
+    <div class="mbox p"><div class="val" id="mv-prot">0</div><div class="lbl">חלבון ג׳</div><div class="tgt" id="mt-prot">—</div><div class="bar"><div class="fill" id="mb-prot" style="width:0%"></div></div></div>
+    <div class="mbox f"><div class="val" id="mv-fat">0</div><div class="lbl">שומן ג׳</div><div class="tgt" id="mt-fat">—</div><div class="bar"><div class="fill" id="mb-fat" style="width:0%"></div></div></div>
+    <div class="mbox k"><div class="val" id="mv-carb">0</div><div class="lbl">פחמ׳ ג׳</div><div class="tgt" id="mt-carb">—</div><div class="bar"><div class="fill" id="mb-carb" style="width:0%"></div></div></div>
+  </div>
+
+  <div id="mealsWrap"></div>
+
+  <button class="btn btn-pri btn-full" style="margin-top:8px" onclick="openAddEntry()">➕ הוסף מוצר / ארוחה</button>
+</div>
+
+<!-- ════════════════ PRODUCTS ════════════════ -->
+<div class="page" id="pg-products">
+  <div class="sec-title">📦 מאגר מוצרים <button class="btn btn-pri btn-sm" onclick="openModal('addProductModal')">➕ מוצר חדש</button></div>
+  <div class="search-wrap"><span class="search-icon">🔍</span><input type="text" id="prodSearch" placeholder="חפש מוצר..." oninput="filterProds()"></div>
+  <div class="cat-filter" id="catFilter"></div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="prod-table">
+      <thead><tr><th>שם מוצר</th><th>קטגוריה</th><th>קל׳</th><th>חלבון</th><th>שומן</th><th>פחמ׳</th><th></th></tr></thead>
+      <tbody id="prodTbody"></tbody>
+    </table>
+    <div id="prodEmpty" style="display:none;padding:32px;text-align:center;color:var(--txt2)">אין מוצרים — הוסף ידנית או סרוק תווית</div>
+  </div>
+</div>
+
+<!-- ════════════════ SCAN ════════════════ -->
+<div class="page" id="pg-scan">
+  <div class="sec-title">📷 סריקת תווית תזונה</div>
+  <div class="scan-drop" onclick="document.getElementById('scanFile').click()">
+    <div class="scan-icon">📷</div>
+    <div style="font-weight:700;font-size:15px;margin-bottom:4px">לחץ לבחירת תמונה</div>
+    <div style="color:var(--txt2);font-size:12px">תמונה של סימון תזונה (ערכים ל-100 גרם)</div>
+  </div>
+  <input type="file" id="scanFile" accept="image/*" style="display:none" onchange="doScan(this)">
+  <div id="scanSpinner" style="display:none;padding:24px 0"><div class="spin"></div><div style="text-align:center;margin-top:10px;color:var(--txt2);font-size:13px">מנתח תמונה עם AI...</div></div>
+  <div id="scanResult" style="display:none" class="card">
+    <div class="sec-title" style="margin-bottom:12px">✅ זוהה מוצר</div>
+    <div class="fg"><label>שם מוצר</label><input type="text" id="sn-name"></div>
+    <div class="row2">
+      <div class="fg"><label>קטגוריה</label><select id="sn-cat"></select></div>
+    </div>
+    <div class="row4">
+      <div class="fg"><label>קל׳</label><input type="number" id="sn-cal"></div>
+      <div class="fg"><label>חלבון</label><input type="number" id="sn-prot"></div>
+      <div class="fg"><label>שומן</label><input type="number" id="sn-fat"></div>
+      <div class="fg"><label>פחמ׳</label><input type="number" id="sn-carb"></div>
+    </div>
+    <div class="row2" style="margin-top:4px">
+      <button class="btn btn-sec btn-full" onclick="scanSave()">💾 שמור למאגר</button>
+      <button class="btn btn-grn btn-full" onclick="scanAddLog()">➕ הוסף ליומן</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ RECIPES ════════════════ -->
+<div class="page" id="pg-recipes">
+  <div class="sec-title">🍳 מתכונים <button class="btn btn-pri btn-sm" onclick="openModal('addRecipeModal')">➕ מתכון חדש</button></div>
+  <div id="recipesList"></div>
+  <div id="recipesEmpty" style="display:none;padding:40px;text-align:center;color:var(--txt2)">אין מתכונים — צור מתכון חדש</div>
+</div>
+
+<!-- ════════════════ WEIGHT ════════════════ -->
+<div class="page" id="pg-weight">
+  <div class="sec-title">⚖️ מעקב משקל <button class="btn btn-pri btn-sm" onclick="openModal('addWeightModal')">➕ מדידה</button></div>
+  <div class="card">
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px">גרף משקל</div>
+    <div class="chart-wrap"><canvas id="wChart"></canvas></div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="w-table">
+      <thead><tr><th>תאריך</th><th>משקל</th><th>שינוי ק״ג</th><th>שינוי %</th><th></th></tr></thead>
+      <tbody id="wTbody"></tbody>
+    </table>
+    <div id="wEmpty" style="display:none;padding:32px;text-align:center;color:var(--txt2)">אין מדידות עדיין</div>
+  </div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /body -->
+</div><!-- /shell -->
+
+<!-- ════════════════ MODALS ════════════════ -->
+
+<!-- Settings -->
+<div class="overlay" id="settingsModal">
+<div class="modal" style="max-width:400px">
+  <div class="modal-title">⚙️ יעדים יומיים <button class="close-btn" onclick="closeModal('settingsModal')">✕</button></div>
+  <div class="fg"><label>🔑 Anthropic API Key (לסריקת תוויות)</label><input type="password" id="s-key" placeholder="sk-ant-..."></div>
+  <div class="divider"></div>
+  <div class="row2">
+    <div class="fg"><label>מינ׳ קלוריות</label><input type="number" id="s-cal-min"></div>
+    <div class="fg"><label>מקס׳ קלוריות</label><input type="number" id="s-cal-max"></div>
+  </div>
+  <div class="row2">
+    <div class="fg"><label>מינ׳ חלבון ג׳</label><input type="number" id="s-prot-min"></div>
+    <div class="fg"><label>מקס׳ חלבון ג׳</label><input type="number" id="s-prot-max"></div>
+  </div>
+  <div class="row2">
+    <div class="fg"><label>מינ׳ שומן ג׳</label><input type="number" id="s-fat-min"></div>
+    <div class="fg"><label>מקס׳ שומן ג׳</label><input type="number" id="s-fat-max"></div>
+  </div>
+  <div class="row2">
+    <div class="fg"><label>מינ׳ פחמימות ג׳</label><input type="number" id="s-carb-min"></div>
+    <div class="fg"><label>מקס׳ פחמימות ג׳</label><input type="number" id="s-carb-max"></div>
+  </div>
+  <button class="btn btn-pri btn-full" onclick="saveSettings()">💾 שמור</button>
+</div>
+</div>
+
+<!-- Add entry -->
+<div class="overlay" id="addEntryModal">
+<div class="modal">
+  <div class="modal-title">➕ הוסף לארוחה <button class="close-btn" onclick="closeModal('addEntryModal')">✕</button></div>
+  <div class="fg"><label>ארוחה</label><select id="e-meal">
+    <option>🌅 בוקר</option><option>☀️ צהריים</option>
+    <option>🕐 בניים</option><option>🌙 ערב</option><option>➕ נוסף</option>
+  </select></div>
+
+  <div class="src-tabs">
+    <button class="src-tab active" onclick="setSrc('product',this)">📦 מאגר</button>
+    <button class="src-tab" onclick="setSrc('recipe',this)">🍳 מתכון</button>
+    <button class="src-tab" onclick="setSrc('manual',this)">✏️ ידני</button>
+  </div>
+
+  <!-- product -->
+  <div id="src-product">
+    <div class="search-wrap"><span class="search-icon">🔍</span><input type="text" id="e-psearch" placeholder="חפש מוצר..." oninput="filterEntryProds()"></div>
+    <div class="pick-list" id="e-plist"></div>
+    <div id="e-pgrams-row" style="display:none">
+      <div class="fg"><label>כמות (גרם)</label><input type="number" id="e-grams" value="100" oninput="calcProd()"></div>
+      <div id="e-pcalc" style="font-size:12px;color:var(--txt2);margin-bottom:10px"></div>
+    </div>
+  </div>
+
+  <!-- recipe -->
+  <div id="src-recipe" style="display:none">
+    <div class="pick-list" id="e-rlist"></div>
+    <div id="e-runits-row" style="display:none">
+      <div class="fg"><label>כמות יחידות</label><input type="number" id="e-units" value="1" step="0.5" min="0.5" oninput="calcRec()"></div>
+      <div id="e-rcalc" style="font-size:12px;color:var(--txt2);margin-bottom:10px"></div>
+    </div>
+  </div>
+
+  <!-- manual -->
+  <div id="src-manual" style="display:none">
+    <div class="fg"><label>שם</label><input type="text" id="m-name" placeholder="שם המוצר / ארוחה"></div>
+    <div class="row2">
+      <div class="fg"><label>גרם</label><input type="number" id="m-grams" value="100"></div>
+      <div class="fg"><label>קלוריות</label><input type="number" id="m-cal"></div>
+    </div>
+    <div class="row3">
+      <div class="fg"><label>חלבון</label><input type="number" id="m-prot"></div>
+      <div class="fg"><label>שומן</label><input type="number" id="m-fat"></div>
+      <div class="fg"><label>פחמ׳</label><input type="number" id="m-carb"></div>
+    </div>
+  </div>
+
+  <button class="btn btn-pri btn-full" onclick="submitEntry()">➕ הוסף</button>
+</div>
+</div>
+
+<!-- Add product -->
+<div class="overlay" id="addProductModal">
+<div class="modal" style="max-width:400px">
+  <div class="modal-title">📦 מוצר חדש <button class="close-btn" onclick="closeModal('addProductModal')">✕</button></div>
+  <div class="fg"><label>שם מוצר</label><input type="text" id="p-name"></div>
+  <div class="fg"><label>קטגוריה</label><select id="p-cat"></select></div>
+  <p style="font-size:11px;color:var(--txt2);margin-bottom:10px">ערכים ל-100 גרם:</p>
+  <div class="row2">
+    <div class="fg"><label>קלוריות</label><input type="number" id="p-cal" value="0"></div>
+    <div class="fg"><label>חלבון ג׳</label><input type="number" id="p-prot" value="0"></div>
+  </div>
+  <div class="row2">
+    <div class="fg"><label>שומן ג׳</label><input type="number" id="p-fat" value="0"></div>
+    <div class="fg"><label>פחמ׳ ג׳</label><input type="number" id="p-carb" value="0"></div>
+  </div>
+  <div class="fg"><label>סיבים ג׳ (אופציונלי)</label><input type="number" id="p-fiber" value="0"></div>
+  <button class="btn btn-pri btn-full" onclick="saveProduct()">💾 שמור</button>
+</div>
+</div>
+
+<!-- Add recipe -->
+<div class="overlay" id="addRecipeModal">
+<div class="modal">
+  <div class="modal-title">🍳 מתכון חדש <button class="close-btn" onclick="closeModal('addRecipeModal')">✕</button></div>
+  <div class="row2">
+    <div class="fg"><label>שם מתכון</label><input type="text" id="r-name"></div>
+    <div class="fg"><label>חלוקה ליחידות</label><input type="number" id="r-units" value="1" min="1"></div>
+  </div>
+  <div class="fg"><label>הערות</label><input type="text" id="r-notes" placeholder="אופציונלי..."></div>
+  <div class="divider"></div>
+
+  <div style="font-size:12px;font-weight:700;color:var(--txt2);margin-bottom:8px">הוסף רכיב:</div>
+  <div class="search-wrap"><span class="search-icon">🔍</span><input type="text" id="ri-search" placeholder="חפש מוצר..." oninput="filterIngProds()"></div>
+  <div class="pick-list" id="ri-list"></div>
+  <div class="row2" style="margin-bottom:8px">
+    <div class="fg" style="margin:0"><label>גרם</label><input type="number" id="ri-grams" value="100"></div>
+    <div style="display:flex;align-items:flex-end"><button class="btn btn-sec btn-full" onclick="addIng()">+ הוסף</button></div>
+  </div>
+  <div id="ri-ings" style="margin-bottom:10px"></div>
+  <div id="ri-totals" style="font-size:12px;color:var(--txt2);background:var(--s2);border-radius:8px;padding:10px;margin-bottom:12px">
+    סה״כ: 0 קל׳
+  </div>
+  <button class="btn btn-pri btn-full" onclick="saveRecipe()">💾 שמור מתכון</button>
+</div>
+</div>
+
+<!-- Add weight -->
+<div class="overlay" id="addWeightModal">
+<div class="modal" style="max-width:320px">
+  <div class="modal-title">⚖️ הוסף מדידה <button class="close-btn" onclick="closeModal('addWeightModal')">✕</button></div>
+  <div class="fg"><label>תאריך</label><input type="date" id="w-date"></div>
+  <div class="fg"><label>משקל (ק״ג)</label><input type="number" id="w-kg" step="0.1" placeholder="75.5"></div>
+  <div class="fg"><label>הערות</label><input type="text" id="w-notes" placeholder="בצום, בוקר..."></div>
+  <button class="btn btn-pri btn-full" onclick="saveWeight()">💾 שמור</button>
+</div>
+</div>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────
+const CATS = [
+  ["dairy","🥛 מוצרי חלב"],["meat","🥩 בשר"],["poultry","🍗 עוף"],
+  ["grains","🌾 דגנים"],["vegetables","🥦 ירקות"],["fruits","🍎 פירות"],
+  ["snacks","🍫 חטיפים"],["beverages","🥤 שתייה"],
+  ["supplements","💊 תוספות"],["other","📦 אחר"]
+];
+const MEALS = ["בוקר","צהריים","בניים","ערב","נוסף"];
+const MEAL_ICONS = {בוקר:"🌅",צהריים:"☀️",בניים:"🕐",ערב:"🌙",נוסף:"➕"};
+const catMap = Object.fromEntries(CATS);
+
+// ── State ──────────────────────────────────────────────────────────────────
+let allProds=[], allRecipes=[], settings={};
+let currentCat="", selProd=null, selRec=null, selIngProd=null;
+let recIngredients=[];
+let curSrc="product";
+
+// ── Init ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async ()=>{
+  // Populate selects
+  CATS.forEach(([k,v])=>{
+    ["p-cat","sn-cat","e-rcat"].forEach(id=>{
+      const s=document.getElementById(id); if(s){const o=new Option(v,k);s.add(o);}
+    });
+  });
+  buildCatFilter();
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('dateInput').value=today;
+  document.getElementById('w-date').value=today;
+  await Promise.all([loadSettings(),loadProds(),loadRecipes()]);
+  loadDay();
+  loadWeight();
+});
+
+// ── Tab ────────────────────────────────────────────────────────────────────
+function tab(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pg-'+name).classList.add('on');
+  btn.classList.add('active');
+  if(name==='weight'){setTimeout(drawChart,50);}
+}
+
+// ── API ────────────────────────────────────────────────────────────────────
+async function api(url,opts={}){
+  const r=await fetch(url,opts); return r.json();
+}
+function post(url,body){
+  return api(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+}
+
+// ── Settings ───────────────────────────────────────────────────────────────
+async function loadSettings(){
+  settings=await api('/api/settings');
+  document.getElementById('s-key').value=settings.api_key||'';
+  document.getElementById('s-cal-min').value=settings.cal_min;
+  document.getElementById('s-cal-max').value=settings.cal_max;
+  document.getElementById('s-prot-min').value=settings.prot_min;
+  document.getElementById('s-prot-max').value=settings.prot_max;
+  document.getElementById('s-fat-min').value=settings.fat_min;
+  document.getElementById('s-fat-max').value=settings.fat_max;
+  document.getElementById('s-carb-min').value=settings.carb_min;
+  document.getElementById('s-carb-max').value=settings.carb_max;
+}
+async function saveSettings(){
+  const d={
+    api_key:document.getElementById('s-key').value.trim(),
+    cal_min:+document.getElementById('s-cal-min').value,
+    cal_max:+document.getElementById('s-cal-max').value,
+    prot_min:+document.getElementById('s-prot-min').value,
+    prot_max:+document.getElementById('s-prot-max').value,
+    fat_min:+document.getElementById('s-fat-min').value,
+    fat_max:+document.getElementById('s-fat-max').value,
+    carb_min:+document.getElementById('s-carb-min').value,
+    carb_max:+document.getElementById('s-carb-max').value,
+  };
+  await post('/api/settings',d);
+  settings={...settings,...d,
+    cal_min:d.cal_min,cal_max:d.cal_max,
+    prot_min:d.prot_min,prot_max:d.prot_max,
+    fat_min:d.fat_min,fat_max:d.fat_max,
+    carb_min:d.carb_min,carb_max:d.carb_max};
+  closeModal('settingsModal'); toast('✅ יעדים נשמרו'); loadDay();
+}
+
+// ── Daily ──────────────────────────────────────────────────────────────────
+function shiftDay(n){
+  const d=new Date(document.getElementById('dateInput').value);
+  d.setDate(d.getDate()+n);
+  document.getElementById('dateInput').value=d.toISOString().split('T')[0];
+  loadDay();
+}
+function goToday(){
+  document.getElementById('dateInput').value=new Date().toISOString().split('T')[0];
+  loadDay();
+}
+async function loadDay(){
+  const d=document.getElementById('dateInput').value;
+  const data=await api('/api/log?date='+d);
+  settings={...settings,...data.settings};
+  renderMacros(data.totals);
+  renderMeals(data.meals);
+}
+function renderMacros(t){
+  const defs=[
+    ['cal','c',t.cal,settings.cal_min,settings.cal_max,''],
+    ['prot','p',t.prot,settings.prot_min,settings.prot_max,'ג׳'],
+    ['fat','f',t.fat,settings.fat_min,settings.fat_max,'ג׳'],
+    ['carb','k',t.carb,settings.carb_min,settings.carb_max,'ג׳'],
+  ];
+  defs.forEach(([k,cls,v,mn,mx,u])=>{
+    const over=v>mx;
+    document.querySelector('.mbox.'+cls).classList.toggle('over',over);
+    document.getElementById('mv-'+k).textContent=Math.round(v)+(u?u:'');
+    document.getElementById('mt-'+k).textContent=`יעד: ${Math.round(mn)}–${Math.round(mx)}`;
+    const pct=Math.min(mx>0?v/mx*100:0,100);
+    document.getElementById('mb-'+k).style.width=pct+'%';
+  });
+}
+function renderMeals(meals){
+  const wrap=document.getElementById('mealsWrap');
+  wrap.innerHTML='';
+  MEALS.forEach(m=>{
+    const entries=meals[m]||[];
+    const tcal=entries.reduce((s,e)=>s+e.cal,0);
+    const sec=document.createElement('div');
+    sec.className='meal-sec';
+    sec.innerHTML=`
+      <div class="meal-hdr">
+        <span class="mname">${MEAL_ICONS[m]} ${m}</span>
+        <span class="mcals">${Math.round(tcal)} קל׳</span>
+      </div>
+      <div class="meal-body" id="mb-${m}">
+        ${entries.length?entries.map(e=>`
+          <div class="log-row">
+            <div class="log-info">
+              <div class="log-name">${e.name}</div>
+              <div class="log-macros">${e.grams}ג׳ · 🔥${Math.round(e.cal)} · 💪${e.prot.toFixed(1)}ג׳ · 🧈${e.fat.toFixed(1)}ג׳ · 🌾${e.carb.toFixed(1)}ג׳</div>
+            </div>
+            <button class="btn-red" onclick="delEntry(${e.id})">🗑</button>
+          </div>`).join('')
+          :`<div class="log-empty">ריק</div>`}
+      </div>`;
+    wrap.appendChild(sec);
+  });
+}
+async function delEntry(id){
+  await api('/api/log/'+id,{method:'DELETE'}); loadDay();
+}
+
+// ── Add entry ──────────────────────────────────────────────────────────────
+function openAddEntry(){
+  selProd=null; selRec=null; curSrc='product';
+  document.getElementById('e-psearch').value='';
+  document.getElementById('e-pgrams-row').style.display='none';
+  renderEntryProds('');
+  renderEntryRecs();
+  setSrc('product',document.querySelector('.src-tab'));
+  openModal('addEntryModal');
+}
+function setSrc(s,btn){
+  curSrc=s;
+  ['product','recipe','manual'].forEach(k=>{
+    document.getElementById('src-'+k).style.display=k===s?'':'none';
+  });
+  document.querySelectorAll('.src-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function filterEntryProds(){renderEntryProds(document.getElementById('e-psearch').value);}
+function renderEntryProds(q){
+  const list=document.getElementById('e-plist');
+  const prods=allProds.filter(p=>!q||p.name.includes(q));
+  list.innerHTML=prods.slice(0,20).map(p=>`
+    <div class="pick-item${selProd?.id===p.id?' sel':''}" onclick="selEntryProd(${p.id})">
+      <div class="pi-name">${p.name}</div>
+      <div class="pi-macros">🔥${p.cal} · 💪${p.prot}ג׳ · 🧈${p.fat}ג׳ · 🌾${p.carb}ג׳ / 100ג׳</div>
+    </div>`).join('')||'<div style="padding:10px;color:var(--txt2);font-size:12px">לא נמצאו מוצרים</div>';
+}
+function selEntryProd(id){
+  selProd=allProds.find(p=>p.id===id);
+  renderEntryProds(document.getElementById('e-psearch').value);
+  document.getElementById('e-pgrams-row').style.display='';
+  document.getElementById('e-grams').value=100;
+  calcProd();
+}
+function calcProd(){
+  if(!selProd)return;
+  const g=+document.getElementById('e-grams').value||0;
+  const f=g/100;
+  document.getElementById('e-pcalc').textContent=
+    `🔥 ${Math.round(selProd.cal*f)} קל׳ · 💪 ${(selProd.prot*f).toFixed(1)}ג׳ · 🧈 ${(selProd.fat*f).toFixed(1)}ג׳ · 🌾 ${(selProd.carb*f).toFixed(1)}ג׳`;
+}
+function renderEntryRecs(){
+  const list=document.getElementById('e-rlist');
+  list.innerHTML=allRecipes.map(r=>`
+    <div class="pick-item${selRec?.id===r.id?' sel':''}" onclick="selEntryRec(${r.id})">
+      <div class="pi-name">${r.name} (${r.units} יחידות)</div>
+      <div class="pi-macros">ליח׳: 🔥${Math.round(r.total_cal/r.units)} · 💪${(r.total_prot/r.units).toFixed(1)}ג׳</div>
+    </div>`).join('')||'<div style="padding:10px;color:var(--txt2);font-size:12px">אין מתכונים</div>';
+}
+function selEntryRec(id){
+  selRec=allRecipes.find(r=>r.id===id);
+  renderEntryRecs();
+  document.getElementById('e-runits-row').style.display='';
+  document.getElementById('e-units').value=1;
+  calcRec();
+}
+function calcRec(){
+  if(!selRec)return;
+  const u=+document.getElementById('e-units').value||0;
+  const pu=selRec.units;
+  document.getElementById('e-rcalc').textContent=
+    `🔥 ${Math.round(selRec.total_cal/pu*u)} קל׳ · 💪 ${(selRec.total_prot/pu*u).toFixed(1)}ג׳ · 🧈 ${(selRec.total_fat/pu*u).toFixed(1)}ג׳ · 🌾 ${(selRec.total_carb/pu*u).toFixed(1)}ג׳`;
+}
+async function submitEntry(){
+  const mealRaw=document.getElementById('e-meal').value;
+  const meal=mealRaw.includes(' ')?mealRaw.split(' ').slice(1).join(' '):mealRaw;
+  const ld=document.getElementById('dateInput').value;
+  let body=null;
+  if(curSrc==='product'){
+    if(!selProd){toast('⚠️ בחר מוצר');return;}
+    const g=+document.getElementById('e-grams').value; const f=g/100;
+    body={date:ld,meal,name:selProd.name,grams:g,cal:selProd.cal*f,prot:selProd.prot*f,fat:selProd.fat*f,carb:selProd.carb*f,src:'product'};
+  } else if(curSrc==='recipe'){
+    if(!selRec){toast('⚠️ בחר מתכון');return;}
+    const u=+document.getElementById('e-units').value; const pu=selRec.units;
+    body={date:ld,meal,name:selRec.name+` (${u} יח׳)`,grams:Math.round(selRec.total_weight/pu*u),
+      cal:selRec.total_cal/pu*u,prot:selRec.total_prot/pu*u,fat:selRec.total_fat/pu*u,carb:selRec.total_carb/pu*u,src:'recipe'};
+  } else {
+    const nm=document.getElementById('m-name').value.trim();
+    if(!nm){toast('⚠️ הכנס שם');return;}
+    body={date:ld,meal,name:nm,grams:+document.getElementById('m-grams').value||0,
+      cal:+document.getElementById('m-cal').value||0,prot:+document.getElementById('m-prot').value||0,
+      fat:+document.getElementById('m-fat').value||0,carb:+document.getElementById('m-carb').value||0,src:'manual'};
+  }
+  await post('/api/log',body);
+  closeModal('addEntryModal'); loadDay(); toast('✅ נוסף לארוחה');
+}
+
+// ── Products ───────────────────────────────────────────────────────────────
+async function loadProds(){
+  allProds=await api('/api/products');
+  renderProds();
+}
+function buildCatFilter(){
+  const f=document.getElementById('catFilter');
+  f.innerHTML='<button class="cat-chip active" onclick="setCat(\'\',this)">הכל</button>'+
+    CATS.map(([k,v])=>`<button class="cat-chip" onclick="setCat('${k}',this)">${v}</button>`).join('');
+}
+function setCat(c,btn){
+  currentCat=c;
+  document.querySelectorAll('.cat-chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderProds();
+}
+function filterProds(){renderProds();}
+function renderProds(){
+  const q=document.getElementById('prodSearch').value.toLowerCase();
+  let prods=allProds;
+  if(currentCat) prods=prods.filter(p=>p.category===currentCat);
+  if(q) prods=prods.filter(p=>p.name.toLowerCase().includes(q));
+  const tbody=document.getElementById('prodTbody');
+  const empty=document.getElementById('prodEmpty');
+  if(!prods.length){tbody.innerHTML='';empty.style.display='';return;}
+  empty.style.display='none';
+  tbody.innerHTML=prods.map(p=>`
+    <tr>
+      <td style="font-weight:600">${p.name}</td>
+      <td><span class="cat-tag">${(catMap[p.category]||p.category).replace(/^[^\s]+\s/,'')}</span></td>
+      <td>${p.cal}</td><td>${p.prot}ג׳</td><td>${p.fat}ג׳</td><td>${p.carb}ג׳</td>
+      <td><button class="btn-red" onclick="delProd(${p.id})">🗑</button></td>
+    </tr>`).join('');
+}
+async function saveProduct(){
+  const nm=document.getElementById('p-name').value.trim();
+  if(!nm){toast('⚠️ הכנס שם');return;}
+  const catVal=document.getElementById('p-cat').value;
+  await post('/api/products',{name:nm,category:catVal,
+    cal:+document.getElementById('p-cal').value,
+    prot:+document.getElementById('p-prot').value,
+    fat:+document.getElementById('p-fat').value,
+    carb:+document.getElementById('p-carb').value,
+    fiber:+document.getElementById('p-fiber').value||0});
+  closeModal('addProductModal');
+  await loadProds(); toast('✅ מוצר נשמר');
+  ['p-name','p-cal','p-prot','p-fat','p-carb','p-fiber'].forEach(id=>document.getElementById(id).value=id.includes('name')?'':'0');
+}
+async function delProd(id){
+  if(!confirm('למחוק?'))return;
+  await api('/api/products/'+id,{method:'DELETE'});
+  await loadProds(); toast('🗑 נמחק');
+}
+
+// ── Scan ───────────────────────────────────────────────────────────────────
+async function doScan(input){
+  const file=input.files[0]; if(!file)return;
+  document.getElementById('scanSpinner').style.display='';
+  document.getElementById('scanResult').style.display='none';
+  const fd=new FormData(); fd.append('image',file);
+  const r=await fetch('/api/scan',{method:'POST',body:fd});
+  const d=await r.json();
+  document.getElementById('scanSpinner').style.display='none';
+  if(d.error){toast('❌ '+d.error);return;}
+  document.getElementById('sn-name').value=d.name||'';
+  document.getElementById('sn-cat').value=d.category||'other';
+  document.getElementById('sn-cal').value=d.cal||'';
+  document.getElementById('sn-prot').value=d.prot||'';
+  document.getElementById('sn-fat').value=d.fat||'';
+  document.getElementById('sn-carb').value=d.carb||'';
+  document.getElementById('scanResult').style.display='';
+}
+function scanGet(){
+  return{name:document.getElementById('sn-name').value,
+    category:document.getElementById('sn-cat').value,
+    cal:+document.getElementById('sn-cal').value,
+    prot:+document.getElementById('sn-prot').value,
+    fat:+document.getElementById('sn-fat').value,
+    carb:+document.getElementById('sn-carb').value};
+}
+async function scanSave(){
+  const d=scanGet(); if(!d.name){toast('⚠️ שם ריק');return;}
+  await post('/api/products',d); await loadProds(); toast('✅ נשמר במאגר');
+}
+async function scanAddLog(){
+  const d=scanGet(); if(!d.name){toast('⚠️ שם ריק');return;}
+  await post('/api/log',{date:document.getElementById('dateInput').value,meal:'נוסף',
+    name:d.name,grams:100,cal:d.cal,prot:d.prot,fat:d.fat,carb:d.carb,src:'scan'});
+  loadDay(); toast('✅ נוסף ליומן');
+}
+
+// ── Recipes ────────────────────────────────────────────────────────────────
+async function loadRecipes(){
+  allRecipes=await api('/api/recipes');
+  renderRecipes();
+}
+function renderRecipes(){
+  const list=document.getElementById('recipesList');
+  const empty=document.getElementById('recipesEmpty');
+  if(!allRecipes.length){list.innerHTML='';empty.style.display='';return;}
+  empty.style.display='none';
+  list.innerHTML=allRecipes.map(r=>{
+    const pu=r.units;
+    return `<div class="rec-card">
+      <div class="rec-hdr">
+        <span style="font-weight:800">🍳 ${r.name}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;color:var(--txt2)">${r.units} יחידות</span>
+          <button class="btn-red" onclick="delRecipe(${r.id})">🗑</button>
+        </div>
+      </div>
+      <div class="rec-body">
+        <div class="rec-macros">ליחידה: 🔥${Math.round(r.total_cal/pu)} קל׳ · 💪${(r.total_prot/pu).toFixed(1)}ג׳ · 🧈${(r.total_fat/pu).toFixed(1)}ג׳ · 🌾${(r.total_carb/pu).toFixed(1)}ג׳</div>
+        <div class="rec-ings">${r.ingredients.map(i=>i.product_name+' '+i.grams+'ג׳').join(' + ')}</div>
+        ${r.notes?`<div style="font-size:11px;color:var(--txt3);margin-top:4px">${r.notes}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+async function delRecipe(id){
+  if(!confirm('למחוק מתכון?'))return;
+  await api('/api/recipes/'+id,{method:'DELETE'});
+  await loadRecipes(); toast('🗑 נמחק');
+}
+
+// Recipe builder
+selIngProd=null; recIngredients=[];
+function filterIngProds(){
+  const q=document.getElementById('ri-search').value;
+  const list=document.getElementById('ri-list');
+  const prods=allProds.filter(p=>!q||p.name.includes(q));
+  list.innerHTML=prods.slice(0,15).map(p=>`
+    <div class="pick-item${selIngProd?.id===p.id?' sel':''}" onclick="selIngP(${p.id})">
+      <div class="pi-name">${p.name}</div>
+      <div class="pi-macros">🔥${p.cal} · 💪${p.prot}ג׳ / 100ג׳</div>
+    </div>`).join('')||'<div style="padding:10px;color:var(--txt2);font-size:12px">לא נמצא</div>';
+}
+function selIngP(id){
+  selIngProd=allProds.find(p=>p.id===id);
+  filterIngProds();
+}
+function addIng(){
+  if(!selIngProd)return;
+  const g=+document.getElementById('ri-grams').value||100;
+  const f=g/100;
+  recIngredients.push({product_id:selIngProd.id,product_name:selIngProd.name,grams:g,
+    cal:selIngProd.cal*f,prot:selIngProd.prot*f,fat:selIngProd.fat*f,carb:selIngProd.carb*f});
+  renderIngs();
+}
+function removeIng(i){recIngredients.splice(i,1);renderIngs();}
+function renderIngs(){
+  const div=document.getElementById('ri-ings');
+  div.innerHTML=recIngredients.map((ing,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--br);font-size:12px">
+      <span style="flex:1">${ing.product_name}</span>
+      <span style="color:var(--txt2)">${ing.grams}ג׳</span>
+      <span style="color:var(--ylw)">${Math.round(ing.cal)} קל׳</span>
+      <button class="btn-red" style="padding:2px 6px" onclick="removeIng(${i})">×</button>
+    </div>`).join('');
+  const tc=recIngredients.reduce((s,i)=>s+i.cal,0);
+  const tp=recIngredients.reduce((s,i)=>s+i.prot,0);
+  const tf=recIngredients.reduce((s,i)=>s+i.fat,0);
+  const tcb=recIngredients.reduce((s,i)=>s+i.carb,0);
+  document.getElementById('ri-totals').textContent=
+    `סה״כ: 🔥${Math.round(tc)} קל׳ · 💪${tp.toFixed(1)}ג׳ · 🧈${tf.toFixed(1)}ג׳ · 🌾${tcb.toFixed(1)}ג׳`;
+}
+async function saveRecipe(){
+  const nm=document.getElementById('r-name').value.trim();
+  if(!nm){toast('⚠️ הכנס שם');return;}
+  if(!recIngredients.length){toast('⚠️ הוסף רכיב');return;}
+  await post('/api/recipes',{name:nm,units:+document.getElementById('r-units').value||1,
+    notes:document.getElementById('r-notes').value,ingredients:recIngredients});
+  recIngredients=[];renderIngs();
+  ['r-name','r-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('r-units').value=1;
+  closeModal('addRecipeModal'); await loadRecipes(); toast('✅ מתכון נשמר');
+}
+
+// ── Weight ─────────────────────────────────────────────────────────────────
+let weightData=[];
+async function loadWeight(){
+  weightData=await api('/api/weight');
+  renderWeightTable();
+  drawChart();
+}
+function renderWeightTable(){
+  const tbody=document.getElementById('wTbody');
+  const empty=document.getElementById('wEmpty');
+  if(!weightData.length){tbody.innerHTML='';empty.style.display='';return;}
+  empty.style.display='none';
+  tbody.innerHTML=[...weightData].reverse().map(w=>{
+    const ck=w.chg_kg; const cp=w.chg_pct;
+    const cls=ck===null?'':ck<0?'chg-dn':ck>0?'chg-up':'';
+    return `<tr>
+      <td>${w.log_date}</td>
+      <td style="font-weight:800;color:var(--acc)">${w.kg}</td>
+      <td class="${cls}">${ck!==null?(ck>0?'+':'')+ck:'—'}</td>
+      <td class="${cls}">${cp!==null?(cp>0?'+':'')+cp+'%':'—'}</td>
+      <td><button class="btn-red" onclick="delWeight('${w.log_date}')">🗑</button></td>
+    </tr>`;
+  }).join('');
+}
+function drawChart(){
+  const canvas=document.getElementById('wChart');
+  if(!canvas)return;
+  const W=canvas.parentElement.clientWidth||600;
+  const H=180; canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  if(weightData.length<2){
+    ctx.fillStyle='#4a526e'; ctx.font='13px Heebo'; ctx.textAlign='center';
+    ctx.fillText('נדרשות לפחות 2 מדידות',W/2,H/2); return;
+  }
+  const ws=weightData.map(d=>d.kg);
+  const mn=Math.min(...ws)-0.5, mx=Math.max(...ws)+0.5;
+  const pad={t:20,r:16,b:28,l:46};
+  const cW=W-pad.l-pad.r, cH=H-pad.t-pad.b;
+  const xs=i=>pad.l+(i/(ws.length-1))*cW;
+  const ys=v=>pad.t+(1-(v-mn)/(mx-mn))*cH;
+
+  // Grid
+  for(let i=0;i<=4;i++){
+    const y=pad.t+i/4*cH;
+    ctx.strokeStyle='#2a3050'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+cW,y); ctx.stroke();
+    const v=mx-i/4*(mx-mn);
+    ctx.fillStyle='#4a526e'; ctx.font='9px Heebo'; ctx.textAlign='right';
+    ctx.fillText(v.toFixed(1),pad.l-4,y+4);
+  }
+  // Fill
+  const grad=ctx.createLinearGradient(0,pad.t,0,pad.t+cH);
+  grad.addColorStop(0,'rgba(91,141,239,0.35)'); grad.addColorStop(1,'rgba(91,141,239,0)');
+  ctx.beginPath(); ctx.moveTo(xs(0),ys(ws[0]));
+  ws.forEach((w,i)=>{if(i)ctx.lineTo(xs(i),ys(w));});
+  ctx.lineTo(xs(ws.length-1),pad.t+cH); ctx.lineTo(xs(0),pad.t+cH);
+  ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+  // Line
+  ctx.strokeStyle='#5b8def'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ws.forEach((w,i)=>i?ctx.lineTo(xs(i),ys(w)):ctx.moveTo(xs(i),ys(w)));
+  ctx.stroke();
+  // Dots
+  ws.forEach((w,i)=>{
+    ctx.beginPath(); ctx.arc(xs(i),ys(w),4,0,Math.PI*2);
+    ctx.fillStyle='#5b8def'; ctx.fill();
+    ctx.strokeStyle='#0d0f18'; ctx.lineWidth=1.5; ctx.stroke();
+  });
+  // X labels
+  const skip=Math.max(1,Math.ceil(weightData.length/7));
+  weightData.forEach((d,i)=>{
+    if(i%skip===0||i===weightData.length-1){
+      ctx.fillStyle='#4a526e'; ctx.font='9px Heebo'; ctx.textAlign='center';
+      ctx.fillText(d.log_date.slice(5),xs(i),H-6);
+    }
+  });
+}
+async function saveWeight(){
+  const kg=+document.getElementById('w-kg').value;
+  if(!kg){toast('⚠️ הכנס משקל');return;}
+  await post('/api/weight',{date:document.getElementById('w-date').value,kg,notes:document.getElementById('w-notes').value});
+  closeModal('addWeightModal'); await loadWeight(); toast('✅ נשמר');
+  document.getElementById('w-kg').value=''; document.getElementById('w-notes').value='';
+}
+async function delWeight(ld){
+  if(!confirm('למחוק?'))return;
+  await api('/api/weight/'+ld,{method:'DELETE'}); await loadWeight(); toast('🗑 נמחק');
+}
+
+// ── Modal helpers ──────────────────────────────────────────────────────────
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});
+});
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function toast(msg){
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),2700);
+}
+</script>
+</body>
+</html>
