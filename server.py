@@ -126,9 +126,9 @@ def scan():
         import anthropic
         img = base64.standard_b64encode(file.read()).decode()
         mt = file.content_type or "image/jpeg"
-	if mt == "image/heic" or mt == "image/heif":
-    		mt = "image/jpeg"
-        cl  = anthropic.Anthropic(api_key=key)
+        if mt in ("image/heic", "image/heif"):
+            mt = "image/jpeg"
+        cl = anthropic.Anthropic(api_key=key)
         msg = cl.messages.create(model="claude-opus-4-5", max_tokens=512,
             messages=[{"role":"user","content":[
                 {"type":"image","source":{"type":"base64","media_type":mt,"data":img}},
@@ -214,4 +214,4 @@ def del_weight(ld):
     run("DELETE FROM weight_log WHERE log_date=?", (ld,)); return jsonify({"ok":True})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5050)), debug=False)
+    app.run(port=5050, debug=False)
