@@ -212,4 +212,4 @@ def del_weight(ld):
     run("DELETE FROM weight_log WHERE log_date=?", (ld,)); return jsonify({"ok":True})
 
 if __name__ == "__main__":
-    app.run(port=5050, debug=False)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5050)), debug=False)
